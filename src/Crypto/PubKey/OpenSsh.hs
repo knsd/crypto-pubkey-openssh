@@ -8,8 +8,10 @@ module Crypto.PubKey.OpenSsh
 
 import Prelude hiding (take)
 
+import Control.Applicative ((*>), (<|>))
 import Control.Monad (void, replicateM)
 import Data.ByteString.Char8 (ByteString)
+import Data.Char (isControl)
 
 import Data.Attoparsec.ByteString.Char8 (Parser, parseOnly, take, space,
                                          isSpace, takeTill)
@@ -18,8 +20,8 @@ import qualified Data.ByteString.Base64 as Base64
 import qualified Crypto.Types.PubKey.DSA as DSA
 import qualified Crypto.Types.PubKey.RSA as RSA
 
-data OpenSshPublicKey = OpenSshPublicKeyRsa RSA.PublicKey
-                      | OpenSshPublicKeyDsa DSA.PublicKey
+data OpenSshPublicKey = OpenSshPublicKeyRsa RSA.PublicKey ByteString
+                      | OpenSshPublicKeyDsa DSA.PublicKey ByteString
     deriving (Eq, Show)
 
 data OpenSshPublicKeyType = OpenSshPublicKeyTypeRsa
@@ -47,7 +49,7 @@ getInteger = do
     return $ fst $ flip foldl1 (zip ints ([0..] :: [Integer])) $
         \(a, _) (c, p) -> (c * (256 ^ p) + a, p)
 
-getOpenSshPublicKey :: Get OpenSshPublicKey
+getOpenSshPublicKey :: Get (ByteString -> OpenSshPublicKey)
 getOpenSshPublicKey = do
     size <- fmap fromIntegral $ getWord32be
     getBytes size >>= readType >>= \typ -> case typ of
@@ -67,11 +69,15 @@ getOpenSshPublicKey = do
 
 openSshPublicKeyParser :: Parser OpenSshPublicKey
 openSshPublicKeyParser = do
-    _typ <- readType =<< take typeSize
+    void $ readType =<< take typeSize
     void space
     b64 <- takeTill isSpace
     binary <- either fail return $ Base64.decode b64
-    either fail return $ runGet getOpenSshPublicKey binary
+    partialKey <- either fail return $ runGet getOpenSshPublicKey binary
+    fmap partialKey commentParser
+  where
+    commentParser = void space *> (takeTill $ \c -> isSpace c || isControl c)
+                <|> return ""
 
 parseOpenSshPublicKey :: ByteString -> Either String OpenSshPublicKey
 parseOpenSshPublicKey = parseOnly openSshPublicKeyParser
