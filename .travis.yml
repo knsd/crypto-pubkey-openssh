@@ -1,0 +1,2 @@
+language: haskell
+script: "cabal configure --enable-tests -fopenssh && cabal build && cabal test"

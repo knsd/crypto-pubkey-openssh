@@ -1,4 +1,4 @@
-crypto-pubkey-openssh
+crypto-pubkey-openssh [![Build Status](https://secure.travis-ci.org/knsd/crypto-pubkey-openssh.png)](http://travis-ci.org/knsd/crypto-pubkey-openssh)
 =====================
 
 OpenSSH public keys parser, example.
