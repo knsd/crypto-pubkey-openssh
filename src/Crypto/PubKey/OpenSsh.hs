@@ -3,11 +3,13 @@
 
 module Crypto.PubKey.OpenSsh
     ( OpenSshPublicKey(..)
-    , IntegerSerial(..)
     , openSshPublicKeyParser
     , parseOpenSshPublicKey
     , serializeOpenSshPublicKey
     , expandInteger
+    , serByteString
+    , serInteger
+    , serIntegerAddZero
     ) where
 
 import Prelude hiding (take)
@@ -22,7 +24,7 @@ import Data.Word (Word8)
 import Data.Attoparsec.ByteString.Char8 (Parser, parseOnly, take, space,
                                          isSpace, takeTill)
 import Data.Serialize (Get, getBytes, runGet, getWord32be, getWord8,
-                       Putter, runPut, putByteString)
+                       Put, Putter, runPut, putByteString)
 import qualified Data.ByteString.Base64 as Base64
 import qualified Data.ByteString as BS
 import qualified Crypto.Types.PubKey.DSA as DSA
@@ -102,48 +104,51 @@ expandInteger = reverse . unfoldr expand
 fillSize :: [Word8] -> [Word8]
 fillSize l = replicate (4 - length l) (0 :: Word8) ++ l
 
-class IntegerSerial a where
-    intserSize :: a -> [Word8]
-    intserRepr :: a -> [Word8]
-    intserW8 :: a -> [Word8]
-    intserW8 a = fillSize (intserSize a) ++ intserRepr a
+serInteger :: Integer -> [Word8]
+serInteger i = fillSize (expandInteger $ toInteger $ length repr) ++ repr
+  where
+    repr = expandInteger i
 
-instance IntegerSerial ByteString where
-    intserSize = expandInteger . toInteger . length . BS.unpack
-    intserRepr = BS.unpack
+serByteString :: ByteString -> [Word8]
+serByteString bs = fillSize (expandInteger $ toInteger $ length repr) ++ repr
+  where
+    repr = BS.unpack bs
 
-instance IntegerSerial Integer where
-    intserSize = expandInteger . toInteger . length . expandInteger
-    intserRepr = expandInteger
+serIntegerAddZero :: Integer -> [Word8]
+serIntegerAddZero i = fillSize (expandInteger $ toInteger $ length repr) ++ repr
+  where
+    repr = 0 : (expandInteger i)
+
+commonPublicKeyPutter :: ByteString
+                      -> ByteString
+                      -> [Word8]
+                      -> Put
+commonPublicKeyPutter keyType comment body = do
+    putByteString keyType
+    putByteString " "
+    putByteString $ Base64.encode $ BS.pack body
+    when (not $ BS.null comment) $ do
+        putByteString " "
+        putByteString comment
 
 openSshPublicKeyPutter :: Putter OpenSshPublicKey
 openSshPublicKeyPutter (OpenSshPublicKeyRsa
                         (RSA.PublicKey _ public_n public_e)
-                        comment) = do
-    putByteString "ssh-rsa"
-    putByteString " "
-    putByteString $ Base64.encode $ BS.pack $ concat
-        [ intserW8 ("ssh-rsa" :: ByteString)
-        , intserW8 public_e
-        , intserW8 public_n ]
-    when (not $ BS.null comment) $ do
-        putByteString " "
-        putByteString comment
+                        comment) =
+    commonPublicKeyPutter "ssh-rsa" comment $ concat
+        [ serByteString ("ssh-rsa" :: ByteString)
+        , serInteger public_e
+        , serIntegerAddZero public_n ]
 
 openSshPublicKeyPutter (OpenSshPublicKeyDsa
                         (DSA.PublicKey (public_p, public_q, public_g) public_y)
-                        comment) = do
-    putByteString "ssh-dss"
-    putByteString " "
-    putByteString $ Base64.encode $ BS.pack $ concat
-        [ intserW8 ("ssh-dss" :: ByteString)
-        , intserW8 public_p
-        , intserW8 public_q
-        , intserW8 public_g
-        , intserW8 public_y ]
-    when (not $ BS.null comment) $ do
-        putByteString " "
-        putByteString comment
+                        comment) =
+    commonPublicKeyPutter "ssh-dss" comment $ concat
+        [ serByteString ("ssh-dss" :: ByteString)
+        , serIntegerAddZero public_p
+        , serIntegerAddZero public_q
+        , serIntegerAddZero public_g
+        , serIntegerAddZero public_y ]
 
 serializeOpenSshPublicKey :: OpenSshPublicKey -> ByteString
 serializeOpenSshPublicKey = runPut . openSshPublicKeyPutter
