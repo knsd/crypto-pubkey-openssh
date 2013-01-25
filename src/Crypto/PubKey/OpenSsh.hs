@@ -75,7 +75,7 @@ getOpenSshPublicKey = do
         q <- getInteger
         g <- getInteger
         y <- getInteger
-        return $ OpenSshPublicKeyDsa $ DSA.PublicKey (p, g, q) y
+        return $ OpenSshPublicKeyDsa $ DSA.PublicKey (p, q, g) y
 
 openSshPublicKeyParser :: Parser OpenSshPublicKey
 openSshPublicKeyParser = do
