@@ -6,10 +6,6 @@ module Crypto.PubKey.OpenSsh
     , openSshPublicKeyParser
     , parseOpenSshPublicKey
     , serializeOpenSshPublicKey
-    , expandInteger
-    , serByteString
-    , serInteger
-    , serIntegerAddZero
     ) where
 
 import Prelude hiding (take)
@@ -17,6 +13,7 @@ import Prelude hiding (take)
 import Control.Applicative ((*>), (<|>))
 import Control.Monad (void, replicateM, when)
 import Data.ByteString.Char8 (ByteString)
+import Data.Bits (testBit)
 import Data.Char (isControl)
 import Data.List (unfoldr)
 import Data.Word (Word8)
@@ -92,32 +89,37 @@ openSshPublicKeyParser = do
 parseOpenSshPublicKey :: ByteString -> Either String OpenSshPublicKey
 parseOpenSshPublicKey = parseOnly openSshPublicKeyParser
 
+-- NOTE(rocco66): hope Integer is always positive
+fixZeroByte :: [Word8] -> [Word8]
+fixZeroByte bs = if testBit (head bs) msb then 0:bs else bs
+  where
+    msb = 7
+
 expandInteger :: Integer -> [Word8]
-expandInteger = reverse . unfoldr expand
+expandInteger n = reverse $ unfoldr expand $ abs n
   where
     expand :: Integer -> Maybe (Word8, Integer)
-    expand i | i == 0    = Nothing
-             | otherwise = Just $ getResults $ quotRem i 256
+    expand e | e == 0    = Nothing
+             | otherwise = Just $ getResults $ quotRem e 256
     getResults :: (Integer, Integer) -> (Word8, Integer)
     getResults (i, w) = (fromIntegral w, i)
 
 fillSize :: [Word8] -> [Word8]
 fillSize l = replicate (4 - length l) (0 :: Word8) ++ l
 
-serInteger :: Integer -> [Word8]
-serInteger i = fillSize (expandInteger $ toInteger $ length repr) ++ repr
-  where
-    repr = expandInteger i
+class IntegerSerial a where
+    intserSize :: a -> [Word8]
+    intserRepr :: a -> [Word8]
+    intserW8 :: a -> [Word8]
+    intserW8 a = fillSize (intserSize a) ++ intserRepr a
 
-serByteString :: ByteString -> [Word8]
-serByteString bs = fillSize (expandInteger $ toInteger $ length repr) ++ repr
-  where
-    repr = BS.unpack bs
+instance IntegerSerial ByteString where
+    intserSize = expandInteger . toInteger . length . BS.unpack
+    intserRepr = BS.unpack
 
-serIntegerAddZero :: Integer -> [Word8]
-serIntegerAddZero i = fillSize (expandInteger $ toInteger $ length repr) ++ repr
-  where
-    repr = 0 : (expandInteger i)
+instance IntegerSerial Integer where
+    intserSize = expandInteger . toInteger . length . intserRepr
+    intserRepr = fixZeroByte . expandInteger
 
 commonPublicKeyPutter :: ByteString
                       -> ByteString
@@ -136,19 +138,19 @@ openSshPublicKeyPutter (OpenSshPublicKeyRsa
                         (RSA.PublicKey _ public_n public_e)
                         comment) =
     commonPublicKeyPutter "ssh-rsa" comment $ concat
-        [ serByteString ("ssh-rsa" :: ByteString)
-        , serInteger public_e
-        , serIntegerAddZero public_n ]
+        [ intserW8 ("ssh-rsa" :: ByteString)
+        , intserW8 public_e
+        , intserW8 public_n ]
 
 openSshPublicKeyPutter (OpenSshPublicKeyDsa
                         (DSA.PublicKey (public_p, public_q, public_g) public_y)
                         comment) =
     commonPublicKeyPutter "ssh-dss" comment $ concat
-        [ serByteString ("ssh-dss" :: ByteString)
-        , serIntegerAddZero public_p
-        , serIntegerAddZero public_q
-        , serIntegerAddZero public_g
-        , serIntegerAddZero public_y ]
+        [ intserW8 ("ssh-dss" :: ByteString)
+        , intserW8 public_p
+        , intserW8 public_q
+        , intserW8 public_g
+        , intserW8 public_y ]
 
 serializeOpenSshPublicKey :: OpenSshPublicKey -> ByteString
 serializeOpenSshPublicKey = runPut . openSshPublicKeyPutter
