@@ -15,12 +15,12 @@ import Data.ByteString.Char8 (ByteString)
 import Data.Bits (testBit)
 import Data.Char (isControl)
 import Data.List (unfoldr)
-import Data.Word (Word8)
+import Data.Word (Word8, Word32)
 
 import Data.Attoparsec.ByteString.Char8 (Parser, parseOnly, take, space,
                                          isSpace, takeTill)
 import Data.Serialize (Get, getBytes, runGet, getWord32be, getWord8,
-                       Put, Putter, runPut, putByteString)
+                       Put, Putter, runPut, putByteString, putWord32be, put)
 import qualified Data.ByteString.Base64 as Base64
 import qualified Data.ByteString as BS
 import qualified Crypto.Types.PubKey.DSA as DSA
@@ -41,10 +41,6 @@ readType :: Monad m => ByteString -> m OpenSshPublicKeyType
 readType "ssh-rsa" = return OpenSshPublicKeyTypeRsa
 readType "ssh-dss" = return OpenSshPublicKeyTypeDsa
 readType _ = fail "Invalid key type"
-
-showType :: OpenSshPublicKeyType -> ByteString
-showType OpenSshPublicKeyTypeRsa = "ssh-rsa"
-showType OpenSshPublicKeyTypeDsa = "ssh-dss"
 
 calculateSize :: Integer -> Int
 calculateSize = go 1
@@ -92,6 +88,9 @@ openSshPublicKeyParser = do
 parseOpenSshPublicKey :: ByteString -> Either String OpenSshPublicKey
 parseOpenSshPublicKey = parseOnly openSshPublicKeyParser
 
+intToW8 :: Int -> Word32
+intToW8 = fromIntegral . toInteger
+
 -- NOTE(rocco66): hope Integer is always positive
 fixZeroByte :: [Word8] -> [Word8]
 fixZeroByte bs = if testBit (head bs) msb then 0:bs else bs
@@ -107,50 +106,50 @@ expandInteger n = reverse $ unfoldr expand $ abs n
     getResults :: (Integer, Integer) -> (Word8, Integer)
     getResults (i, w) = (fromIntegral w, i)
 
-fillSize :: [Word8] -> [Word8]
-fillSize l = replicate (4 - length l) (0 :: Word8) ++ l
+keyTypePutter :: Putter OpenSshPublicKeyType
+keyTypePutter OpenSshPublicKeyTypeRsa = putByteString "ssh-rsa"
+keyTypePutter OpenSshPublicKeyTypeDsa = putByteString "ssh-dss"
 
-class IntegerSerial a where
-    intserRepr :: a -> [Word8]
-    intserW8 :: a -> [Word8]
-    intserW8 a = fillSize (intserSize a) ++ intserRepr a
-    intserSize :: a -> [Word8]
-    intserSize = expandInteger . toInteger . length . intserRepr
-
-instance IntegerSerial OpenSshPublicKeyType where
-    intserRepr = BS.unpack . showType
-
-instance IntegerSerial Integer where
-    intserRepr = fixZeroByte . expandInteger
+putInteger :: Integer -> ByteString
+putInteger i = runPut $ do
+    putWord32be $ intToW8 $ length binary
+    mapM_ put binary
+  where
+    binary = fixZeroByte $ expandInteger i
 
 commonPublicKeyPutter :: OpenSshPublicKeyType
                       -> ByteString
-                      -> [Word8]
+                      -> ByteString
                       -> Put
 commonPublicKeyPutter keyType comment body = do
-    putByteString $ showType keyType
+    keyTypePutter keyType
     putByteString " "
-    putByteString $ Base64.encode $ BS.pack $ (intserW8 keyType) ++ body
+    putByteString $ Base64.encode $ BS.append wrapType body
     when (not $ BS.null comment) $ do
         putByteString " "
         putByteString comment
+  where
+    binaryType = runPut $ keyTypePutter keyType
+    wrapType = runPut $ do
+        putWord32be $ intToW8 $ BS.length $ binaryType
+        putByteString binaryType
 
 openSshPublicKeyPutter :: Putter OpenSshPublicKey
 openSshPublicKeyPutter (OpenSshPublicKeyRsa
                         (RSA.PublicKey _ public_n public_e)
                         comment) =
-    commonPublicKeyPutter OpenSshPublicKeyTypeRsa comment $ concat
-        [ intserW8 public_e
-        , intserW8 public_n ]
+    commonPublicKeyPutter OpenSshPublicKeyTypeRsa comment $ BS.concat
+        [ putInteger public_e
+        , putInteger public_n ]
 
 openSshPublicKeyPutter (OpenSshPublicKeyDsa
                         (DSA.PublicKey (public_p, public_g, public_q) public_y)
                         comment) =
-    commonPublicKeyPutter OpenSshPublicKeyTypeDsa comment $ concat
-        [ intserW8 public_p
-        , intserW8 public_q
-        , intserW8 public_g
-        , intserW8 public_y ]
+    commonPublicKeyPutter OpenSshPublicKeyTypeDsa comment $ BS.concat
+        [ putInteger public_p
+        , putInteger public_q
+        , putInteger public_g
+        , putInteger public_y ]
 
 serializeOpenSshPublicKey :: OpenSshPublicKey -> ByteString
 serializeOpenSshPublicKey = runPut . openSshPublicKeyPutter
