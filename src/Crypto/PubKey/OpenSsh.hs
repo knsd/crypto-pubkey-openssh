@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
 
 module Crypto.PubKey.OpenSsh
     ( OpenSshPublicKey(..)
@@ -72,7 +71,7 @@ getOpenSshPublicKey = do
         q <- getInteger
         g <- getInteger
         y <- getInteger
-        return $ OpenSshPublicKeyDsa $ DSA.PublicKey (p, q, g) y
+        return $ OpenSshPublicKeyDsa $ DSA.PublicKey (p, g, q) y
 
 openSshPublicKeyParser :: Parser OpenSshPublicKey
 openSshPublicKeyParser = do
@@ -143,7 +142,7 @@ openSshPublicKeyPutter (OpenSshPublicKeyRsa
         , intserW8 public_n ]
 
 openSshPublicKeyPutter (OpenSshPublicKeyDsa
-                        (DSA.PublicKey (public_p, public_q, public_g) public_y)
+                        (DSA.PublicKey (public_p, public_g, public_q) public_y)
                         comment) =
     commonPublicKeyPutter "ssh-dss" comment $ concat
         [ intserW8 ("ssh-dss" :: ByteString)
