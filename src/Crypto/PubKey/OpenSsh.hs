@@ -107,17 +107,16 @@ fillSize :: [Word8] -> [Word8]
 fillSize l = replicate (4 - length l) (0 :: Word8) ++ l
 
 class IntegerSerial a where
-    intserSize :: a -> [Word8]
     intserRepr :: a -> [Word8]
     intserW8 :: a -> [Word8]
     intserW8 a = fillSize (intserSize a) ++ intserRepr a
+    intserSize :: a -> [Word8]
+    intserSize = expandInteger . toInteger . length . intserRepr
 
 instance IntegerSerial ByteString where
-    intserSize = expandInteger . toInteger . length . BS.unpack
     intserRepr = BS.unpack
 
 instance IntegerSerial Integer where
-    intserSize = expandInteger . toInteger . length . intserRepr
     intserRepr = fixZeroByte . expandInteger
 
 commonPublicKeyPutter :: ByteString
