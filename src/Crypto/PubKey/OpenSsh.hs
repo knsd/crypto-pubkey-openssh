@@ -42,6 +42,10 @@ readType "ssh-rsa" = return OpenSshPublicKeyTypeRsa
 readType "ssh-dss" = return OpenSshPublicKeyTypeDsa
 readType _ = fail "Invalid key type"
 
+showType :: OpenSshPublicKeyType -> ByteString
+showType OpenSshPublicKeyTypeRsa = "ssh-rsa"
+showType OpenSshPublicKeyTypeDsa = "ssh-dss"
+
 calculateSize :: Integer -> Int
 calculateSize = go 1
   where
@@ -113,20 +117,20 @@ class IntegerSerial a where
     intserSize :: a -> [Word8]
     intserSize = expandInteger . toInteger . length . intserRepr
 
-instance IntegerSerial ByteString where
-    intserRepr = BS.unpack
+instance IntegerSerial OpenSshPublicKeyType where
+    intserRepr = BS.unpack . showType
 
 instance IntegerSerial Integer where
     intserRepr = fixZeroByte . expandInteger
 
-commonPublicKeyPutter :: ByteString
+commonPublicKeyPutter :: OpenSshPublicKeyType
                       -> ByteString
                       -> [Word8]
                       -> Put
 commonPublicKeyPutter keyType comment body = do
-    putByteString keyType
+    putByteString $ showType keyType
     putByteString " "
-    putByteString $ Base64.encode $ BS.pack body
+    putByteString $ Base64.encode $ BS.pack $ (intserW8 keyType) ++ body
     when (not $ BS.null comment) $ do
         putByteString " "
         putByteString comment
@@ -135,17 +139,15 @@ openSshPublicKeyPutter :: Putter OpenSshPublicKey
 openSshPublicKeyPutter (OpenSshPublicKeyRsa
                         (RSA.PublicKey _ public_n public_e)
                         comment) =
-    commonPublicKeyPutter "ssh-rsa" comment $ concat
-        [ intserW8 ("ssh-rsa" :: ByteString)
-        , intserW8 public_e
+    commonPublicKeyPutter OpenSshPublicKeyTypeRsa comment $ concat
+        [ intserW8 public_e
         , intserW8 public_n ]
 
 openSshPublicKeyPutter (OpenSshPublicKeyDsa
                         (DSA.PublicKey (public_p, public_g, public_q) public_y)
                         comment) =
-    commonPublicKeyPutter "ssh-dss" comment $ concat
-        [ intserW8 ("ssh-dss" :: ByteString)
-        , intserW8 public_p
+    commonPublicKeyPutter OpenSshPublicKeyTypeDsa comment $ concat
+        [ intserW8 public_p
         , intserW8 public_q
         , intserW8 public_g
         , intserW8 public_y ]
