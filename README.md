@@ -7,13 +7,13 @@ OpenSSH public keys parser, example.
 import System.Environment (getArgs)
 import qualified Data.ByteString as B
 
-import Crypto.PubKey.OpenSsh (parseOpenSshPublicKey)
+import Crypto.PubKey.OpenSsh (decode)
 
 main :: IO ()
 main = do
     fname <- fmap head getArgs
     content <- B.readFile fname
-    case parseOpenSshPublicKey content of
+    case decode content of
         Left e -> error e
         Right key -> print key
 ```

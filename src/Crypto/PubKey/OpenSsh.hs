@@ -1,11 +1,9 @@
 module Crypto.PubKey.OpenSsh
     ( OpenSshPublicKey(..)
-    , openSshPublicKeyParser
-    , parseOpenSshPublicKey
-    , serializeOpenSshPublicKey
+    , encode
+    , decode
     ) where
 
-import Crypto.PubKey.OpenSsh.Internal (OpenSshPublicKey(..),
-                                       openSshPublicKeyParser,
-                                       parseOpenSshPublicKey,
-                                       serializeOpenSshPublicKey)
+import Crypto.PubKey.OpenSsh.Types (OpenSshPublicKey(..))
+import Crypto.PubKey.OpenSsh.Encode (encode)
+import Crypto.PubKey.OpenSsh.Decode (decode)

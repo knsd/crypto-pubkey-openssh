@@ -13,10 +13,10 @@ import Test.Framework.Providers.QuickCheck2 (testProperty)
 import Test.QuickCheck (Property, Arbitrary(..), elements)
 import Test.QuickCheck.Monadic (monadicIO, run, assert)
 
-import Crypto.PubKey.OpenSsh.Internal (OpenSshPublicKeyType(..),
-                                       OpenSshPublicKey(..),
-                                       parseOpenSshPublicKey,
-                                       serializeOpenSshPublicKey)
+import Crypto.PubKey.OpenSsh.Types (OpenSshPublicKeyType(..),
+                                    OpenSshPublicKey(..))
+import Crypto.PubKey.OpenSsh.Encode (encode)
+import Crypto.PubKey.OpenSsh.Decode (decode)
 
 type StrictByteString = SB.ByteString
 
@@ -38,16 +38,16 @@ openSshPubKey t = withSystemTempDirectory base $ \dir -> do
 testWithOpenSsh :: OpenSshPublicKeyType -> Property
 testWithOpenSsh t = monadicIO $ do
     pub <- run $ openSshPubKey t
-    assert $ check (parseOpenSshPublicKey pub) pub
+    assert $ check (decode pub) pub
   where
     check = case t of
         OpenSshPublicKeyTypeRsa -> \r b -> case r of
             Right k@(OpenSshPublicKeyRsa _ _) ->
-                serializeOpenSshPublicKey k == b
+                encode k == b
             _                                 -> False
         OpenSshPublicKeyTypeDsa -> \r b -> case r of
             Right k@(OpenSshPublicKeyDsa _ _) ->
-                serializeOpenSshPublicKey k == b
+                encode k == b
             _                                 -> False
 
 main :: IO ()
