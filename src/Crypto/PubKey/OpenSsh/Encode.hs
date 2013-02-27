@@ -14,7 +14,7 @@ import qualified Crypto.Types.PubKey.DSA as DSA
 import qualified Crypto.Types.PubKey.RSA as RSA
 import qualified Data.ByteString.Base64 as Base64
 
-import Crypto.PubKey.OpenSsh.Types (OpenSshKeyType(..),
+import Crypto.PubKey.OpenSsh.Types (OpenSshKeyType(..), Passphrase,
                                     OpenSshPublicKey(..), OpenSshPrivateKey(..))
 
 fixZeroByte :: [Word8] -> [Word8]
@@ -79,5 +79,5 @@ openSshPublicKeyPutter (OpenSshPublicKeyDsa
 encodePublic :: OpenSshPublicKey -> ByteString
 encodePublic = runPut . openSshPublicKeyPutter
 
-encodePrivate :: OpenSshPrivateKey -> ByteString
+encodePrivate :: OpenSshPrivateKey -> Maybe Passphrase -> ByteString
 encodePrivate = error "Not implemented"

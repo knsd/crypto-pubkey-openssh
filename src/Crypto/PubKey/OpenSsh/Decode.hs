@@ -18,7 +18,7 @@ import qualified Data.ByteString.Base64 as Base64
 import qualified Crypto.Types.PubKey.DSA as DSA
 import qualified Crypto.Types.PubKey.RSA as RSA
 
-import Crypto.PubKey.OpenSsh.Types (OpenSshKeyType(..),
+import Crypto.PubKey.OpenSsh.Types (OpenSshKeyType(..), Passphrase,
                                     OpenSshPublicKey(..), OpenSshPrivateKey(..))
 
 typeSize :: Int
@@ -75,8 +75,8 @@ openSshPublicKeyParser = do
 decodePublic :: ByteString -> Either String OpenSshPublicKey
 decodePublic = parseOnly openSshPublicKeyParser
 
-decodePrivate :: ByteString -> Either String OpenSshPrivateKey
-decodePrivate bs = pemParseBS bs >>= \pems -> case pems of
+decodePrivate :: ByteString -> Maybe Passphrase -> Either String OpenSshPrivateKey
+decodePrivate bs mbPass = pemParseBS bs >>= \pems -> case pems of
     [] -> Left "Private key not found"
     (_:_:_) -> Left "Too many private keys"
     [PEM { .. }] -> do
