@@ -16,15 +16,15 @@ import qualified Data.ByteString.Base64 as Base64
 import qualified Crypto.Types.PubKey.DSA as DSA
 import qualified Crypto.Types.PubKey.RSA as RSA
 
-import Crypto.PubKey.OpenSsh.Types (OpenSshPublicKeyType(..),
-                                    OpenSshPublicKey(..))
+import Crypto.PubKey.OpenSsh.Types (OpenSshKeyType(..),
+                                    OpenSshPublicKey(..), OpenSshPrivateKey(..))
 
 typeSize :: Int
 typeSize = 7
 
-readType :: Monad m => ByteString -> m OpenSshPublicKeyType
-readType "ssh-rsa" = return OpenSshPublicKeyTypeRsa
-readType "ssh-dss" = return OpenSshPublicKeyTypeDsa
+readType :: Monad m => ByteString -> m OpenSshKeyType
+readType "ssh-rsa" = return OpenSshKeyTypeRsa
+readType "ssh-dss" = return OpenSshKeyTypeDsa
 readType _ = fail "Invalid key type"
 
 calculateSize :: Integer -> Int
@@ -44,8 +44,8 @@ getOpenSshPublicKey :: Get (ByteString -> OpenSshPublicKey)
 getOpenSshPublicKey = do
     size <- fmap fromIntegral $ getWord32be
     getBytes size >>= readType >>= \typ -> case typ of
-        OpenSshPublicKeyTypeRsa -> parseRsa
-        OpenSshPublicKeyTypeDsa -> parseDsa
+        OpenSshKeyTypeRsa -> parseRsa
+        OpenSshKeyTypeDsa -> parseDsa
   where
     parseRsa = do 
         e <- getInteger
@@ -72,3 +72,6 @@ openSshPublicKeyParser = do
 
 decodePublic :: ByteString -> Either String OpenSshPublicKey
 decodePublic = parseOnly openSshPublicKeyParser
+
+decodePrivate :: ByteString -> Either String OpenSshPrivateKey
+decodePrivate = error "Not implemented"

@@ -14,8 +14,8 @@ import qualified Crypto.Types.PubKey.DSA as DSA
 import qualified Crypto.Types.PubKey.RSA as RSA
 import qualified Data.ByteString.Base64 as Base64
 
-import Crypto.PubKey.OpenSsh.Types (OpenSshPublicKeyType(..),
-                                    OpenSshPublicKey(..))
+import Crypto.PubKey.OpenSsh.Types (OpenSshKeyType(..),
+                                    OpenSshPublicKey(..), OpenSshPrivateKey(..))
 
 fixZeroByte :: [Word8] -> [Word8]
 fixZeroByte bs = if testBit (head bs) msb then 0:bs else bs
@@ -31,9 +31,9 @@ expandInteger n = reverse $ unfoldr expand $ n
     getResults :: (Integer, Integer) -> (Word8, Integer)
     getResults (i, w) = (fromIntegral w, i)
 
-keyTypePutter :: Putter OpenSshPublicKeyType
-keyTypePutter OpenSshPublicKeyTypeRsa = putByteString "ssh-rsa"
-keyTypePutter OpenSshPublicKeyTypeDsa = putByteString "ssh-dss"
+keyTypePutter :: Putter OpenSshKeyType
+keyTypePutter OpenSshKeyTypeRsa = putByteString "ssh-rsa"
+keyTypePutter OpenSshKeyTypeDsa = putByteString "ssh-dss"
 
 mpint :: Integer -> ByteString
 mpint i = runPut $ do
@@ -42,7 +42,7 @@ mpint i = runPut $ do
   where
     binary = fixZeroByte $ expandInteger i
 
-commonPublicKeyPutter :: OpenSshPublicKeyType
+commonPublicKeyPutter :: OpenSshKeyType
                       -> ByteString
                       -> ByteString
                       -> Put
@@ -63,14 +63,14 @@ openSshPublicKeyPutter :: Putter OpenSshPublicKey
 openSshPublicKeyPutter (OpenSshPublicKeyRsa
                         (RSA.PublicKey _ public_n public_e)
                         comment) =
-    commonPublicKeyPutter OpenSshPublicKeyTypeRsa comment $ BS.concat
+    commonPublicKeyPutter OpenSshKeyTypeRsa comment $ BS.concat
         [ mpint public_e
         , mpint public_n ]
 
 openSshPublicKeyPutter (OpenSshPublicKeyDsa
                         (DSA.PublicKey (public_p, public_g, public_q) public_y)
                         comment) =
-    commonPublicKeyPutter OpenSshPublicKeyTypeDsa comment $ BS.concat
+    commonPublicKeyPutter OpenSshKeyTypeDsa comment $ BS.concat
         [ mpint public_p
         , mpint public_q
         , mpint public_g
@@ -78,3 +78,6 @@ openSshPublicKeyPutter (OpenSshPublicKeyDsa
 
 encodePublic :: OpenSshPublicKey -> ByteString
 encodePublic = runPut . openSshPublicKeyPutter
+
+encodePrivate :: OpenSshPrivateKey -> ByteString
+encodePrivate = error "Not implemented"

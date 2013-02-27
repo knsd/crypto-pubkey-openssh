@@ -13,6 +13,6 @@ data OpenSshPublicKey = OpenSshPublicKeyRsa RSA.PublicKey ByteString
                       | OpenSshPublicKeyDsa DSA.PublicKey ByteString
     deriving (Eq, Show)
 
-data OpenSshPublicKeyType = OpenSshPublicKeyTypeRsa
-                          | OpenSshPublicKeyTypeDsa
+data OpenSshKeyType = OpenSshKeyTypeRsa
+                    | OpenSshKeyTypeDsa
     deriving (Eq, Show)
