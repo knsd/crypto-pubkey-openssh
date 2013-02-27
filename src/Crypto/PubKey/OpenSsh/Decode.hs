@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Crypto.PubKey.OpenSsh.Decode where
 
@@ -11,6 +12,7 @@ import Data.Char (isControl)
 
 import Data.Attoparsec.ByteString.Char8 (Parser, parseOnly, take, space,
                                      isSpace, takeTill)
+import Data.PEM (PEM(..), pemParseBS)
 import Data.Serialize (Get, getBytes, runGet, getWord32be, getWord8)
 import qualified Data.ByteString.Base64 as Base64
 import qualified Crypto.Types.PubKey.DSA as DSA
@@ -74,4 +76,7 @@ decodePublic :: ByteString -> Either String OpenSshPublicKey
 decodePublic = parseOnly openSshPublicKeyParser
 
 decodePrivate :: ByteString -> Either String OpenSshPrivateKey
-decodePrivate = error "Not implemented"
+decodePrivate bs = pemParseBS bs >>= \pems -> case pems of
+    [] -> Left "Private key not found"
+    (_:_:_) -> Left "Too many private keys"
+    [PEM { .. }] -> error "Not implemented"
