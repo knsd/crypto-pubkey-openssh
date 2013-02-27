@@ -15,8 +15,7 @@ import Test.QuickCheck.Monadic (monadicIO, run, assert)
 
 import Crypto.PubKey.OpenSsh.Types (OpenSshPublicKeyType(..),
                                     OpenSshPublicKey(..))
-import Crypto.PubKey.OpenSsh.Encode (encode)
-import Crypto.PubKey.OpenSsh.Decode (decode)
+import Crypto.PubKey.OpenSsh (encodePublic, decodePublic)
 
 type StrictByteString = SB.ByteString
 
@@ -38,16 +37,16 @@ openSshPubKey t = withSystemTempDirectory base $ \dir -> do
 testWithOpenSsh :: OpenSshPublicKeyType -> Property
 testWithOpenSsh t = monadicIO $ do
     pub <- run $ openSshPubKey t
-    assert $ check (decode pub) pub
+    assert $ check (decodePublic pub) pub
   where
     check = case t of
         OpenSshPublicKeyTypeRsa -> \r b -> case r of
             Right k@(OpenSshPublicKeyRsa _ _) ->
-                encode k == b
+                encodePublic k == b
             _                                 -> False
         OpenSshPublicKeyTypeDsa -> \r b -> case r of
             Right k@(OpenSshPublicKeyDsa _ _) ->
-                encode k == b
+                encodePublic k == b
             _                                 -> False
 
 main :: IO ()

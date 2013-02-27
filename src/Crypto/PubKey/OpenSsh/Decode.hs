@@ -70,5 +70,5 @@ openSshPublicKeyParser = do
     commentParser = void space *> (takeTill $ \c -> isSpace c || isControl c)
                 <|> return ""
 
-decode :: ByteString -> Either String OpenSshPublicKey
-decode = parseOnly openSshPublicKeyParser
+decodePublic :: ByteString -> Either String OpenSshPublicKey
+decodePublic = parseOnly openSshPublicKeyParser

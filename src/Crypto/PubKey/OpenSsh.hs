@@ -1,9 +1,10 @@
 module Crypto.PubKey.OpenSsh
     ( OpenSshPublicKey(..)
-    , encode
-    , decode
+    , OpenSshPrivateKey(..)
+    , encodePublic
+    , decodePublic
     ) where
 
-import Crypto.PubKey.OpenSsh.Types (OpenSshPublicKey(..))
-import Crypto.PubKey.OpenSsh.Encode (encode)
-import Crypto.PubKey.OpenSsh.Decode (decode)
+import Crypto.PubKey.OpenSsh.Types (OpenSshPublicKey(..), OpenSshPrivateKey(..))
+import Crypto.PubKey.OpenSsh.Encode (encodePublic)
+import Crypto.PubKey.OpenSsh.Decode (decodePublic)

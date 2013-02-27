@@ -76,5 +76,5 @@ openSshPublicKeyPutter (OpenSshPublicKeyDsa
         , mpint public_g
         , mpint public_y ]
 
-encode :: OpenSshPublicKey -> ByteString
-encode = runPut . openSshPublicKeyPutter
+encodePublic :: OpenSshPublicKey -> ByteString
+encodePublic = runPut . openSshPublicKeyPutter
