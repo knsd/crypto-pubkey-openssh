@@ -79,4 +79,9 @@ decodePrivate :: ByteString -> Either String OpenSshPrivateKey
 decodePrivate bs = pemParseBS bs >>= \pems -> case pems of
     [] -> Left "Private key not found"
     (_:_:_) -> Left "Too many private keys"
-    [PEM { .. }] -> error "Not implemented"
+    [PEM { .. }] -> do
+        keyType <- case pemName of
+                "RSA PRIVATE KEY" -> Right OpenSshKeyTypeRsa
+                "DSA PRIVATE KEY" -> Right OpenSshKeyTypeDsa
+                _                 -> Left "Unknown private key type"
+        error "Not implemented"
