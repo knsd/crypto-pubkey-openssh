@@ -1,5 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE OverloadedStrings, RecordWildCards #-}
 
 module Crypto.PubKey.OpenSsh.Decode where
 
@@ -13,6 +12,9 @@ import Data.Char (isControl)
 import Data.Attoparsec.ByteString.Char8 (Parser, parseOnly, take, space,
                                      isSpace, takeTill)
 import Data.PEM (PEM(..), pemParseBS)
+import Data.ASN1.Encoding
+import Data.ASN1.Stream
+import Data.ASN1.BinaryEncoding (DER(..))
 import Data.Serialize (Get, getBytes, runGet, getWord32be, getWord8)
 import qualified Data.ByteString.Base64 as Base64
 import qualified Crypto.Types.PubKey.DSA as DSA
@@ -58,7 +60,7 @@ getOpenSshPublicKey = do
         q <- getInteger
         g <- getInteger
         y <- getInteger
-        return $ OpenSshPublicKeyDsa $ DSA.PublicKey (p, g, q) y
+        return $ OpenSshPublicKeyDsa $ DSA.PublicKey (DSA.Params p g q) y
 
 openSshPublicKeyParser :: Parser OpenSshPublicKey
 openSshPublicKeyParser = do
@@ -76,12 +78,46 @@ decodePublic :: ByteString -> Either String OpenSshPublicKey
 decodePublic = parseOnly openSshPublicKeyParser
 
 decodePrivate :: ByteString -> Maybe Passphrase -> Either String OpenSshPrivateKey
-decodePrivate bs mbPass = pemParseBS bs >>= \pems -> case pems of
-    [] -> Left "Private key not found"
-    (_:_:_) -> Left "Too many private keys"
-    [PEM { .. }] -> do
-        keyType <- case pemName of
-                "RSA PRIVATE KEY" -> Right OpenSshKeyTypeRsa
-                "DSA PRIVATE KEY" -> Right OpenSshKeyTypeDsa
-                _                 -> Left "Unknown private key type"
-        error "Not implemented"
+decodePrivate _ (Just _) = error "3DES encrypted PEMs not supported"
+decodePrivate bs _ = pemParseBS bs >>= \pems -> case pems of
+    []           -> Left "Private key not found"
+    (_:_:_)      -> Left "Too many private keys"
+    [p@(PEM { .. })] -> do
+        case pemName of
+            "RSA PRIVATE KEY" -> parseRSA p
+            "DSA PRIVATE KEY" -> parseDSA p
+            _                 -> Left "Unknown private key type"
+  where
+    parseDSA  :: PEM -> Either String OpenSshPrivateKey
+    parseDSA (PEM {..}) =
+      case decodeASN1' DER pemContent of
+          Left er    -> Left (show er)
+          Right [ Start Sequence
+                , IntVal _version
+                , IntVal params_p
+                , IntVal params_q
+                , IntVal params_g
+                , IntVal _pubKey
+                , IntVal private_x
+                ] -> let private_params = DSA.Params {..}
+                     in Right (OpenSshPrivateKeyDsa ( DSA.PrivateKey {..} ))
+          Right _ -> Left "Invalid ASN1 stream found in PEM."
+
+    parseRSA  :: PEM -> Either String OpenSshPrivateKey
+    parseRSA (PEM {..}) =
+      case decodeASN1' DER pemContent of
+          Left er    -> Left (show er)
+          Right [ Start Sequence
+                , IntVal _version
+                , IntVal public_n
+                , IntVal public_e
+                , IntVal private_d
+                , IntVal private_p
+                , IntVal private_q
+                , IntVal private_dP
+                , IntVal private_dQ
+                , IntVal private_qinv
+                ] -> let public_size = calculateSize public_n
+                         private_pub = RSA.PublicKey { .. }
+                     in Right (OpenSshPrivateKeyRsa (RSA.PrivateKey {..}))
+          Right _ -> Left "Invalid ASN1 stream found in PEM."

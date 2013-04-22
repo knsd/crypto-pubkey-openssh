@@ -68,7 +68,7 @@ openSshPublicKeyPutter (OpenSshPublicKeyRsa
         , mpint public_n ]
 
 openSshPublicKeyPutter (OpenSshPublicKeyDsa
-                        (DSA.PublicKey (public_p, public_g, public_q) public_y)
+                        (DSA.PublicKey (DSA.Params public_p public_g public_q) public_y)
                         comment) =
     commonPublicKeyPutter OpenSshKeyTypeDsa comment $ BS.concat
         [ mpint public_p
