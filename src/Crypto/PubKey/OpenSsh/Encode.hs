@@ -59,6 +59,18 @@ commonPublicKeyPutter keyType comment body = do
         putWord32be $ fromIntegral $ BS.length $ binaryType
         putByteString binaryType
 
+commonPrivateKeyPutter :: OpenSshKeyType
+                       -> ByteString
+                       -> Put
+commonPrivateKeyPutter OpenSshKeyTypeRsa body = do
+    putByteString "-----BEGIN RSA PRIVATE KEY-----\n"
+    putByteString body
+    putByteString "-----END RSA PRIVATE KEY-----"
+commonPrivateKeyPutter OpenSshKeyTypeDsa body = do
+    putByteString "-----BEGIN DSA PRIVATE KEY-----\n"
+    putByteString body
+    putByteString "-----END DSA PRIVATE KEY-----"
+
 openSshPublicKeyPutter :: Putter OpenSshPublicKey
 openSshPublicKeyPutter (OpenSshPublicKeyRsa
                         (RSA.PublicKey _ public_n public_e)
@@ -76,8 +88,39 @@ openSshPublicKeyPutter (OpenSshPublicKeyDsa
         , mpint public_g
         , mpint public_y ]
 
+openSshPrivateKeyPutter :: Maybe Passphrase -> Putter OpenSshPrivateKey
+openSshPrivateKeyPutter = error "Unimplemented until types are fixed"
+{-
+openSshPrivateKeyPutter (OpenSshPrivateKeyRsa (RSA.PrivateKey {..})) =
+    let RSA.PublicKey{..} = private_public
+    in commonPrivateKeyPutter OpenSshKeyTypeRsa "" $ BS.concat
+        [ mpint 0 -- version
+        , mpint public_n
+        , mpint public_e
+        , mpint private_d
+        , mpint private_p
+        , mpint private_q
+        , mpint private_qP
+        , mpint private_qQ
+        , mpint private_qinv
+        [
+openSshPrivateKeyPutter (OpenSshPrivateKeyDsa (DSA.PrivateKey {..})) =
+    let DSA.Params{..} = private_params
+    in commonPrivateKeyPutter OpenSshKeyTypeDsa "" $ BS.concat
+        [ mpint 0
+        , mpint params_p
+        , mpint params_q
+        , mpint params_g
+        , mpint pubKey_which_we_dont_have
+        -- FIXME notice our types aren't quite what we want - we toss
+        -- this information on decode (in addition to the version)
+        -- and then need it again on encode.
+        , mpint private_x
+        ]
+-}
+
 encodePublic :: OpenSshPublicKey -> ByteString
 encodePublic = runPut . openSshPublicKeyPutter
 
 encodePrivate :: OpenSshPrivateKey -> Maybe Passphrase -> ByteString
-encodePrivate = error "Not implemented"
+encodePrivate k p = runPut $ openSshPrivateKeyPutter p k
