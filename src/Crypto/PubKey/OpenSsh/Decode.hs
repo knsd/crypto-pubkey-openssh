@@ -97,10 +97,10 @@ decodePrivate bs _ = pemParseBS bs >>= \pems -> case pems of
                 , IntVal params_p
                 , IntVal params_q
                 , IntVal params_g
-                , IntVal _pubKey
+                , IntVal public_y
                 , IntVal private_x
                 ] -> let private_params = DSA.Params {..}
-                     in Right (OpenSshPrivateKeyDsa ( DSA.PrivateKey {..} ))
+                     in Right (OpenSshPrivateKeyDsa ( DSA.PrivateKey {..} )public_y)
           Right _ -> Left "Invalid ASN1 stream found in PEM."
 
     parseRSA  :: PEM -> Either String OpenSshPrivateKey

@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings, RecordWildCards #-}
 
 module Crypto.PubKey.OpenSsh.Encode where
 
@@ -89,35 +89,31 @@ openSshPublicKeyPutter (OpenSshPublicKeyDsa
         , mpint public_y ]
 
 openSshPrivateKeyPutter :: Maybe Passphrase -> Putter OpenSshPrivateKey
-openSshPrivateKeyPutter = error "Unimplemented until types are fixed"
-{-
-openSshPrivateKeyPutter (OpenSshPrivateKeyRsa (RSA.PrivateKey {..})) =
-    let RSA.PublicKey{..} = private_public
-    in commonPrivateKeyPutter OpenSshKeyTypeRsa "" $ BS.concat
+openSshPrivateKeyPutter (Just _)  _ = error "Passpharse not implemented"
+openSshPrivateKeyPutter _ (OpenSshPrivateKeyRsa (RSA.PrivateKey {..})) =
+    let RSA.PublicKey{..} = private_pub
+    in commonPrivateKeyPutter OpenSshKeyTypeRsa $ BS.concat
         [ mpint 0 -- version
         , mpint public_n
         , mpint public_e
         , mpint private_d
         , mpint private_p
         , mpint private_q
-        , mpint private_qP
-        , mpint private_qQ
+        , mpint private_dP
+        , mpint private_dQ
         , mpint private_qinv
-        [
-openSshPrivateKeyPutter (OpenSshPrivateKeyDsa (DSA.PrivateKey {..})) =
+        ]
+openSshPrivateKeyPutter _ (OpenSshPrivateKeyDsa
+                            (DSA.PrivateKey {..}) public_y) =
     let DSA.Params{..} = private_params
-    in commonPrivateKeyPutter OpenSshKeyTypeDsa "" $ BS.concat
+    in commonPrivateKeyPutter OpenSshKeyTypeDsa $ BS.concat
         [ mpint 0
         , mpint params_p
         , mpint params_q
         , mpint params_g
-        , mpint pubKey_which_we_dont_have
-        -- FIXME notice our types aren't quite what we want - we toss
-        -- this information on decode (in addition to the version)
-        -- and then need it again on encode.
+        , mpint public_y
         , mpint private_x
         ]
--}
 
 encodePublic :: OpenSshPublicKey -> ByteString
 encodePublic = runPut . openSshPublicKeyPutter

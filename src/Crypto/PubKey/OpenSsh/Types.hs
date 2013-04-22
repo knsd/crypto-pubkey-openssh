@@ -6,7 +6,7 @@ import qualified Crypto.Types.PubKey.DSA as DSA
 import qualified Crypto.Types.PubKey.RSA as RSA
 
 data OpenSshPrivateKey = OpenSshPrivateKeyRsa RSA.PrivateKey
-                       | OpenSshPrivateKeyDsa DSA.PrivateKey
+                       | OpenSshPrivateKeyDsa DSA.PrivateKey DSA.PublicNumber
     deriving (Eq, Show)
 
 data OpenSshPublicKey = OpenSshPublicKeyRsa RSA.PublicKey ByteString
