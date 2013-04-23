@@ -117,6 +117,7 @@ decodePrivate bs _ = pemParseBS bs >>= \pems -> case pems of
                 , IntVal private_dP
                 , IntVal private_dQ
                 , IntVal private_qinv
+                , End Sequence
                 ] -> let public_size = calculateSize public_n
                          private_pub = RSA.PublicKey { .. }
                      in Right (OpenSshPrivateKeyRsa (RSA.PrivateKey {..}))
