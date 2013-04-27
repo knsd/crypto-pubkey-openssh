@@ -5,6 +5,7 @@ module Crypto.PubKey.OpenSsh.Decode.Tests
 
 import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
+import Test.QuickCheck (once)
 
 import Crypto.PubKey.OpenSsh.Decode (decodePublic, decodePrivate)
 import Data.ByteString.Char8 ()
@@ -80,8 +81,8 @@ testDecodeDSAPrivate =
 
 tests :: Test
 tests = testGroup "Crypto.PubKey.OpenSsh.Decode.Tests"
-    [ testProperty "Decode Public RSA" testDecodeRSAPublic
-    , testProperty "Decode Private RSA" testDecodeRSAPrivate
-    , testProperty "Decode Public DSA" testDecodeDSAPublic
-    , testProperty "Decode Private DSA" testDecodeDSAPrivate
+    [ testProperty "Decode Public RSA" $ once testDecodeRSAPublic
+    , testProperty "Decode Private RSA" $ once testDecodeRSAPrivate
+    , testProperty "Decode Public DSA" $ once testDecodeDSAPublic
+    , testProperty "Decode Private DSA" $ once testDecodeDSAPrivate
     ]
