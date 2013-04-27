@@ -7,6 +7,8 @@ import Test.Framework.Providers.QuickCheck2 (testProperty)
 
 import Crypto.PubKey.OpenSsh.Encode (expandInteger)
 
+-- | In version 0.2.0 `expandInteger` function returns empty list for
+-- integer 0.
 testExpandInteger :: Integer -> Bool
 testExpandInteger i = (> 0) $ length $ expandInteger i
 
