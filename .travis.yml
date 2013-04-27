@@ -1,2 +1,3 @@
 language: haskell
+install: "cabal update && cabal install --only-dependencies --enable-tests"
 script: "cabal configure --enable-tests -fopenssh && cabal build && cabal test"
