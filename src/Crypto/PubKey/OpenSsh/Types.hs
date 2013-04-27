@@ -16,5 +16,3 @@ data OpenSshPublicKey = OpenSshPublicKeyRsa RSA.PublicKey ByteString
 data OpenSshKeyType = OpenSshKeyTypeRsa
                     | OpenSshKeyTypeDsa
     deriving (Eq, Show)
-
-type Passphrase = ByteString

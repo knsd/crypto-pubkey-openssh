@@ -10,12 +10,16 @@ import Data.Word (Word8)
 import qualified Data.ByteString as BS
 
 import Data.Serialize (Put, Putter, runPut, putByteString, putWord32be, put)
+import Data.ASN1.Encoding (encodeASN1')
+import Data.ASN1.Stream (ASN1(IntVal, Start, End), ASN1ConstructionType(Sequence))
+import Data.ASN1.BinaryEncoding (DER(..))
+import Data.PEM (PEM(..), pemWriteBS)
 import qualified Crypto.Types.PubKey.DSA as DSA
 import qualified Crypto.Types.PubKey.RSA as RSA
 import qualified Data.ByteString.Base64 as Base64
 
-import Crypto.PubKey.OpenSsh.Types (OpenSshKeyType(..), Passphrase,
-                                    OpenSshPublicKey(..), OpenSshPrivateKey(..))
+import Crypto.PubKey.OpenSsh.Types (OpenSshKeyType(..), OpenSshPublicKey(..),
+                                    OpenSshPrivateKey(..))
 
 fixZeroByte :: [Word8] -> [Word8]
 fixZeroByte bs = if testBit (head bs) msb then 0:bs else bs
@@ -63,13 +67,9 @@ commonPrivateKeyPutter :: OpenSshKeyType
                        -> ByteString
                        -> Put
 commonPrivateKeyPutter OpenSshKeyTypeRsa body = do
-    putByteString "-----BEGIN RSA PRIVATE KEY-----\n"
-    putByteString body
-    putByteString "-----END RSA PRIVATE KEY-----"
+    putByteString $ pemWriteBS $ PEM "RSA PRIVATE KEY" [] body
 commonPrivateKeyPutter OpenSshKeyTypeDsa body = do
-    putByteString "-----BEGIN DSA PRIVATE KEY-----\n"
-    putByteString body
-    putByteString "-----END DSA PRIVATE KEY-----"
+    putByteString $ pemWriteBS $ PEM "DSA PRIVATE KEY" [] body
 
 openSshPublicKeyPutter :: Putter OpenSshPublicKey
 openSshPublicKeyPutter (OpenSshPublicKeyRsa
@@ -88,35 +88,37 @@ openSshPublicKeyPutter (OpenSshPublicKeyDsa
         , mpint public_g
         , mpint public_y ]
 
-openSshPrivateKeyPutter :: Maybe Passphrase -> Putter OpenSshPrivateKey
-openSshPrivateKeyPutter (Just _)  _ = error "Passpharse not implemented"
-openSshPrivateKeyPutter _ (OpenSshPrivateKeyRsa (RSA.PrivateKey {..})) =
+openSshPrivateKeyPutter :: Putter OpenSshPrivateKey
+openSshPrivateKeyPutter (OpenSshPrivateKeyRsa (RSA.PrivateKey {..})) =
     let RSA.PublicKey{..} = private_pub
-    in commonPrivateKeyPutter OpenSshKeyTypeRsa $ BS.concat
-        [ mpint 0 -- version
-        , mpint public_n
-        , mpint public_e
-        , mpint private_d
-        , mpint private_p
-        , mpint private_q
-        , mpint private_dP
-        , mpint private_dQ
-        , mpint private_qinv
+    in commonPrivateKeyPutter OpenSshKeyTypeRsa $ encodeASN1' DER
+        [ Start Sequence
+        , IntVal 0  -- version
+        , IntVal public_n
+        , IntVal public_e
+        , IntVal private_d
+        , IntVal private_p
+        , IntVal private_q
+        , IntVal private_dP
+        , IntVal private_dQ
+        , IntVal private_qinv
+        , End Sequence
         ]
-openSshPrivateKeyPutter _ (OpenSshPrivateKeyDsa
-                            (DSA.PrivateKey {..}) public_y) =
+openSshPrivateKeyPutter (OpenSshPrivateKeyDsa (DSA.PrivateKey {..}) public_y) =
     let DSA.Params{..} = private_params
-    in commonPrivateKeyPutter OpenSshKeyTypeDsa $ BS.concat
-        [ mpint 0
-        , mpint params_p
-        , mpint params_q
-        , mpint params_g
-        , mpint public_y
-        , mpint private_x
+    in commonPrivateKeyPutter OpenSshKeyTypeDsa $ encodeASN1' DER
+        [ Start Sequence
+        , IntVal 0  -- version
+        , IntVal params_p
+        , IntVal params_q
+        , IntVal params_g
+        , IntVal public_y
+        , IntVal private_x
+        , End Sequence
         ]
 
 encodePublic :: OpenSshPublicKey -> ByteString
 encodePublic = runPut . openSshPublicKeyPutter
 
-encodePrivate :: OpenSshPrivateKey -> Maybe Passphrase -> ByteString
-encodePrivate k p = runPut $ openSshPrivateKeyPutter p k
+encodePrivate :: OpenSshPrivateKey -> ByteString
+encodePrivate k = runPut $ openSshPrivateKeyPutter k

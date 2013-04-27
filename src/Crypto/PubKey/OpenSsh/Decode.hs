@@ -12,16 +12,16 @@ import Data.Char (isControl)
 import Data.Attoparsec.ByteString.Char8 (Parser, parseOnly, take, space,
                                      isSpace, takeTill)
 import Data.PEM (PEM(..), pemParseBS)
-import Data.ASN1.Encoding
-import Data.ASN1.Stream
+import Data.ASN1.Encoding (decodeASN1')
+import Data.ASN1.Stream (ASN1(IntVal, Start, End), ASN1ConstructionType(Sequence))
 import Data.ASN1.BinaryEncoding (DER(..))
 import Data.Serialize (Get, getBytes, runGet, getWord32be, getWord8)
 import qualified Data.ByteString.Base64 as Base64
 import qualified Crypto.Types.PubKey.DSA as DSA
 import qualified Crypto.Types.PubKey.RSA as RSA
 
-import Crypto.PubKey.OpenSsh.Types (OpenSshKeyType(..), Passphrase,
-                                    OpenSshPublicKey(..), OpenSshPrivateKey(..))
+import Crypto.PubKey.OpenSsh.Types (OpenSshKeyType(..), OpenSshPublicKey(..),
+                                    OpenSshPrivateKey(..))
 
 typeSize :: Int
 typeSize = 7
@@ -51,7 +51,7 @@ getOpenSshPublicKey = do
         OpenSshKeyTypeRsa -> parseRsa
         OpenSshKeyTypeDsa -> parseDsa
   where
-    parseRsa = do 
+    parseRsa = do
         e <- getInteger
         n <- getInteger
         return $ OpenSshPublicKeyRsa $ RSA.PublicKey (calculateSize n) n e
@@ -77,9 +77,8 @@ openSshPublicKeyParser = do
 decodePublic :: ByteString -> Either String OpenSshPublicKey
 decodePublic = parseOnly openSshPublicKeyParser
 
-decodePrivate :: ByteString -> Maybe Passphrase -> Either String OpenSshPrivateKey
-decodePrivate _ (Just _) = error "3DES encrypted PEMs not supported"
-decodePrivate bs _ = pemParseBS bs >>= \pems -> case pems of
+decodePrivate :: ByteString -> Either String OpenSshPrivateKey
+decodePrivate bs = pemParseBS bs >>= \pems -> case pems of
     []           -> Left "Private key not found"
     (_:_:_)      -> Left "Too many private keys"
     [p@(PEM { .. })] -> do
@@ -99,6 +98,7 @@ decodePrivate bs _ = pemParseBS bs >>= \pems -> case pems of
                 , IntVal params_g
                 , IntVal public_y
                 , IntVal private_x
+                , End Sequence
                 ] -> let private_params = DSA.Params {..}
                      in Right (OpenSshPrivateKeyDsa ( DSA.PrivateKey {..} )public_y)
           Right _ -> Left "Invalid ASN1 stream found in PEM."
