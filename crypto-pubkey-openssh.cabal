@@ -1,5 +1,5 @@
 Name:               crypto-pubkey-openssh
-Version:            0.3.0
+Version:            0.2.0
 Synopsis:           OpenSSH public keys parser
 Description:        OpenSSH public keys parser
 License:            MIT
