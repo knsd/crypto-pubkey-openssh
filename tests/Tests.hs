@@ -14,8 +14,8 @@ import Test.Framework.Providers.QuickCheck2 (testProperty)
 import Test.QuickCheck (Property, Arbitrary(..), elements, suchThat)
 import Test.QuickCheck.Monadic (monadicIO, run, assert)
 
-import Crypto.PubKey.OpenSsh.Types (OpenSshKeyType(..), Passphrase,
-                                    OpenSshPublicKey(..), OpenSshPrivateKey(..))
+import Crypto.PubKey.OpenSsh.Types (OpenSshKeyType(..), OpenSshPublicKey(..),
+                                    OpenSshPrivateKey(..))
 import Crypto.PubKey.OpenSsh (encodePublic, decodePublic,
                               encodePrivate, decodePrivate)
 
@@ -26,34 +26,25 @@ type PublicKey = StrictByteString
 instance Arbitrary OpenSshKeyType where
     arbitrary = elements [OpenSshKeyTypeRsa, OpenSshKeyTypeDsa]
 
-instance Arbitrary Passphrase where
-    arbitrary = fmap SB.pack $
-        arbitrary `suchThat` all check
-      where
-        check = (`elem` ['A'..'Z'] ++ ['a'..'z'] ++ ['0'..'9'])
-
-openSshKeys :: OpenSshKeyType -> Maybe Passphrase -> IO (PrivateKey, PublicKey)
-openSshKeys t mbPass = withSystemTempDirectory base $ \dir -> do
+openSshKeys :: OpenSshKeyType -> IO (PrivateKey, PublicKey)
+openSshKeys t = withSystemTempDirectory base $ \dir -> do
     let path = dir </> typ
-    let run = "ssh-keygen -t " <> typ <> " -N " <> pass <> " -f " <> path
+    let run = "ssh-keygen -t " <> typ <> " -N \"\" -f " <> path
     waitForProcess =<< runCommand run
-    priv <- fmap SB.init $ SB.readFile $ path
+    priv <- SB.readFile $ path
     pub <- fmap SB.init $ SB.readFile $ path <.> "pub"
     return (priv, pub)
   where
-    pass = case mbPass of
-        Nothing -> ""
-        Just p  -> SB.unpack p
     base = "crypto-pubkey-openssh-tests"
     typ = case t of
         OpenSshKeyTypeRsa -> "rsa"
         OpenSshKeyTypeDsa -> "dsa"
 
-testWithOpenSsh :: OpenSshKeyType -> Maybe Passphrase -> Property
-testWithOpenSsh t mbPass = monadicIO $ do
-    (priv, pub) <- run $ openSshKeys t mbPass
+testWithOpenSsh :: OpenSshKeyType -> Property
+testWithOpenSsh t = monadicIO $ do
+    (priv, pub) <- run $ openSshKeys t
     assert $ checkPublic (decodePublic pub) pub
-    assert $ checkPrivate (decodePrivate priv mbPass) priv
+    assert $ checkPrivate (decodePrivate priv) priv
   where
     checkPublic = case t of
         OpenSshKeyTypeRsa -> \r b -> case r of
@@ -67,11 +58,11 @@ testWithOpenSsh t mbPass = monadicIO $ do
     checkPrivate = case t of
         OpenSshKeyTypeRsa -> \r b -> case r of
             Right k@(OpenSshPrivateKeyRsa _) ->
-                encodePrivate k mbPass == b
+                encodePrivate k == b
             _                                 -> False
         OpenSshKeyTypeDsa -> \r b -> case r of
-            Right k@(OpenSshPrivateKeyDsa _) ->
-                encodePrivate k mbPass == b
+            Right k@(OpenSshPrivateKeyDsa _ _) ->
+                encodePrivate k == b
             _                                 -> False
 
 main :: IO ()
