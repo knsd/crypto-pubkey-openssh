@@ -27,7 +27,7 @@ fixZeroByte bs = if testBit (head bs) msb then 0:bs else bs
     msb = 7
 
 expandInteger :: Integer -> [Word8]
-expandInteger n = reverse $ unfoldr expand $ n
+expandInteger n = reverse $ unfoldr expand n
   where
     expand :: Integer -> Maybe (Word8, Integer)
     expand e | e == 0    = Nothing

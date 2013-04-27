@@ -18,7 +18,7 @@ Cabal-version:      >= 1.12
 Tested-with:        GHC == 7.6.*
 
 Flag OpenSsh
-  Description:      Test with openssh-keygen
+  Description:      Test with ssh-keygen
   Default:          False
 
 Library
