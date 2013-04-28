@@ -1,7 +1,7 @@
 Name:               crypto-pubkey-openssh
 Version:            0.2.0
-Synopsis:           OpenSSH public keys parser
-Description:        OpenSSH public keys parser
+Synopsis:           OpenSSH keys decoder/encoder
+Description:        OpenSSH keys decoder/encoder
 License:            MIT
 License-file:       LICENSE
 Copyright:          Fedor Gogolev <knsd@knsd.net>
