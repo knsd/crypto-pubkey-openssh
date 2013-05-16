@@ -1,5 +1,5 @@
 Name:               crypto-pubkey-openssh
-Version:            0.2.0
+Version:            0.2.1
 Synopsis:           OpenSSH keys decoder/encoder
 Description:        OpenSSH keys decoder/encoder
 License:            MIT
@@ -30,7 +30,7 @@ Library
                   , base64-bytestring          == 1.0.*
                   , cereal                     == 0.3.*
                   , attoparsec                 == 0.10.*
-                  , crypto-pubkey-types        == 0.3.*
+                  , crypto-pubkey-types        == 0.4.*
                   , pem                        == 0.1.*
                   , asn1-data                  == 0.7.*
 
@@ -53,7 +53,7 @@ Test-suite crypto-pubkey-openssh-tests
                   , base64-bytestring          == 1.0.*
                   , cereal                     == 0.3.*
                   , attoparsec                 == 0.10.*
-                  , crypto-pubkey-types        == 0.3.*
+                  , crypto-pubkey-types        == 0.4.*
                   , pem                        == 0.1.*
                   , asn1-data                  == 0.7.*
 
