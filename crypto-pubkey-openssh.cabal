@@ -61,7 +61,7 @@ Test-suite crypto-pubkey-openssh-tests
 
                   , test-framework             == 0.8.*
                   , test-framework-quickcheck2 == 0.3.*
-                  , QuickCheck                 == 2.5.*
+                  , QuickCheck                 == 2.6.*
                   , temporary                  == 1.1.*
                   , process                    == 1.1.*
                   , filepath                   == 1.3.*
