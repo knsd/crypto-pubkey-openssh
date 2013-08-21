@@ -13,7 +13,7 @@ import Data.Attoparsec.ByteString.Char8 (Parser, parseOnly, take, space,
                                      isSpace, takeTill)
 import Data.PEM (PEM(..), pemParseBS)
 import Data.ASN1.Encoding (decodeASN1')
-import Data.ASN1.Stream (ASN1(IntVal, Start, End), ASN1ConstructionType(Sequence))
+import Data.ASN1.Types (ASN1(IntVal, Start, End), ASN1ConstructionType(Sequence))
 import Data.ASN1.BinaryEncoding (DER(..))
 import Data.Serialize (Get, getBytes, runGet, getWord32be, getWord8)
 import qualified Data.ByteString.Base64 as Base64

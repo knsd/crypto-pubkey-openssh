@@ -11,7 +11,7 @@ import qualified Data.ByteString as BS
 
 import Data.Serialize (Put, Putter, runPut, putByteString, putWord32be, put)
 import Data.ASN1.Encoding (encodeASN1')
-import Data.ASN1.Stream (ASN1(IntVal, Start, End), ASN1ConstructionType(Sequence))
+import Data.ASN1.Types (ASN1(IntVal, Start, End), ASN1ConstructionType(Sequence))
 import Data.ASN1.BinaryEncoding (DER(..))
 import Data.PEM (PEM(..), pemWriteBS)
 import qualified Crypto.Types.PubKey.DSA as DSA

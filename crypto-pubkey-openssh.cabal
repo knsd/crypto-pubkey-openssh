@@ -32,7 +32,8 @@ Library
                   , attoparsec                 == 0.10.*
                   , crypto-pubkey-types        == 0.4.*
                   , pem                        == 0.1.*
-                  , asn1-data                  == 0.7.*
+                  , asn1-types                 == 0.2.*
+                  , asn1-encoding              == 0.8.*
 
   Exposed-modules:  Crypto.PubKey.OpenSsh
   Other-modules:    Crypto.PubKey.OpenSsh.Types
@@ -55,7 +56,8 @@ Test-suite crypto-pubkey-openssh-tests
                   , attoparsec                 == 0.10.*
                   , crypto-pubkey-types        == 0.4.*
                   , pem                        == 0.1.*
-                  , asn1-data                  == 0.7.*
+                  , asn1-types                 == 0.2.*
+                  , asn1-encoding              == 0.8.*
 
                   , test-framework             == 0.8.*
                   , test-framework-quickcheck2 == 0.3.*
