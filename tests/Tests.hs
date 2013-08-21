@@ -2,14 +2,14 @@
 
 module Main where
 
-import Test.Framework (defaultMain)
+import Test.Tasty (defaultMain, testGroup)
 
 import qualified Crypto.PubKey.OpenSsh.Encode.Tests
 import qualified Crypto.PubKey.OpenSsh.Decode.Tests
 import qualified SshKeygen
 
 main :: IO ()
-main = defaultMain
+main = defaultMain $ testGroup "Tests"
     [ Crypto.PubKey.OpenSsh.Encode.Tests.tests
     , Crypto.PubKey.OpenSsh.Decode.Tests.tests
 #ifdef OPENSSH

@@ -5,8 +5,8 @@ module Crypto.PubKey.OpenSsh.Encode.Tests
 import Control.DeepSeq (deepseq)
 import Data.Word (Word8)
 
-import Test.Framework (Test, testGroup)
-import Test.Framework.Providers.QuickCheck2 (testProperty)
+import Test.Tasty (TestTree, testGroup)
+import Test.Tasty.QuickCheck (testProperty)
 
 import Crypto.PubKey.OpenSsh.Encode (fixZeroByte)
 
@@ -14,7 +14,7 @@ import Crypto.PubKey.OpenSsh.Encode (fixZeroByte)
 testFixZeroByte :: [Word8] -> Bool
 testFixZeroByte i = fixZeroByte i `deepseq` True
 
-tests :: Test
+tests :: TestTree
 tests = testGroup "Crypto.PubKey.OpenSsh.Encode.Tests"
     [ testProperty "regression test testFixZeroByte" testFixZeroByte
     ]

@@ -59,8 +59,8 @@ Test-suite crypto-pubkey-openssh-tests
                   , asn1-types                 == 0.2.*
                   , asn1-encoding              == 0.8.*
 
-                  , test-framework             == 0.8.*
-                  , test-framework-quickcheck2 == 0.3.*
+                  , tasty                      == 0.2.*
+                  , tasty-quickcheck           == 0.2.*
                   , QuickCheck                 == 2.6.*
                   , temporary                  == 1.1.*
                   , process                    == 1.1.*
