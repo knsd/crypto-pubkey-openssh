@@ -3,8 +3,8 @@ module Crypto.PubKey.OpenSsh.Decode.Tests
     ( tests
     ) where
 
-import Test.Framework (Test, testGroup)
-import Test.Framework.Providers.QuickCheck2 (testProperty)
+import Test.Tasty (TestTree, testGroup)
+import Test.Tasty.QuickCheck (testProperty, once)
 
 import Crypto.PubKey.OpenSsh.Decode (decodePublic, decodePrivate)
 import Data.ByteString.Char8 ()
@@ -78,10 +78,10 @@ testDecodeDSAPrivate =
 \iyaf5dPPUem5PxQeKx1b\n\
 \-----END DSA PRIVATE KEY-----"
 
-tests :: Test
+tests :: TestTree
 tests = testGroup "Crypto.PubKey.OpenSsh.Decode.Tests"
-    [ testProperty "Decode Public RSA" testDecodeRSAPublic
-    , testProperty "Decode Private RSA" testDecodeRSAPrivate
-    , testProperty "Decode Public DSA" testDecodeDSAPublic
-    , testProperty "Decode Private DSA" testDecodeDSAPrivate
+    [ testProperty "Decode Public RSA" $ once testDecodeRSAPublic
+    , testProperty "Decode Private RSA" $ once testDecodeRSAPrivate
+    , testProperty "Decode Public DSA" $ once testDecodeDSAPublic
+    , testProperty "Decode Private DSA" $ once testDecodeDSAPrivate
     ]

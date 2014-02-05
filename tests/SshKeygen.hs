@@ -8,9 +8,8 @@ import System.Process (runCommand, waitForProcess)
 import System.IO.Temp (withSystemTempDirectory)
 import qualified Data.ByteString.Char8 as SB
 
-import Test.Framework (Test, testGroup)
-import Test.Framework.Providers.QuickCheck2 (testProperty)
-import Test.QuickCheck (Property, Arbitrary(..), elements, suchThat)
+import Test.Tasty (TestTree, testGroup)
+import Test.Tasty.QuickCheck (Property, Arbitrary(..), elements, suchThat, testProperty)
 import Test.QuickCheck.Monadic (monadicIO, run, assert)
 
 import Crypto.PubKey.OpenSsh.Types (OpenSshKeyType(..), OpenSshPublicKey(..),
@@ -66,7 +65,7 @@ testWithOpenSsh t = monadicIO $ do
                 encodePrivate k == b
             _                                 -> False
 
-tests :: Test
+tests :: TestTree
 tests = testGroup "SshKeygen"
     [ testProperty "decode/encode" $ testWithOpenSsh
     ]
