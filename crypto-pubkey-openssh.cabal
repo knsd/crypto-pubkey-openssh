@@ -1,5 +1,5 @@
 Name:               crypto-pubkey-openssh
-Version:            0.2.4
+Version:            0.2.5
 Synopsis:           OpenSSH keys decoder/encoder
 Description:        OpenSSH keys decoder/encoder
 License:            MIT
