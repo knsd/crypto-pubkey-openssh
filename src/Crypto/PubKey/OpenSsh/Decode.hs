@@ -9,7 +9,7 @@ import Control.Monad (void, replicateM)
 import Data.ByteString.Char8 (ByteString)
 import Data.Char (isControl)
 
-import Data.Attoparsec.ByteString.Char8 (Parser, parseOnly, take, space,
+import Data.Attoparsec.ByteString.Char8 (Parser, parseOnly, space,
                                      isSpace, takeTill)
 import Data.PEM (PEM(..), pemParseBS)
 import Data.ASN1.Encoding (decodeASN1')
@@ -22,9 +22,6 @@ import qualified Crypto.Types.PubKey.RSA as RSA
 
 import Crypto.PubKey.OpenSsh.Types (OpenSshKeyType(..), OpenSshPublicKey(..),
                                     OpenSshPrivateKey(..))
-
-typeSize :: Int
-typeSize = 7
 
 readType :: Monad m => ByteString -> m OpenSshKeyType
 readType "ssh-rsa" = return OpenSshKeyTypeRsa
@@ -64,7 +61,7 @@ getOpenSshPublicKey = do
 
 openSshPublicKeyParser :: Parser OpenSshPublicKey
 openSshPublicKeyParser = do
-    void $ readType =<< take typeSize
+    void $ readType =<< takeTill isSpace
     void space
     b64 <- takeTill isSpace
     binary <- either fail return $ Base64.decode b64
