@@ -1,8 +1,11 @@
 module Crypto.PubKey.OpenSsh
-    ( OpenSshPublicKey(..)
+    ( -- * Types
+      OpenSshPublicKey(..)
     , OpenSshPrivateKey(..)
+      -- * Encoding
     , encodePublic
     , decodePublic
+      -- * Decoding
     , encodePrivate
     , decodePrivate
     ) where
