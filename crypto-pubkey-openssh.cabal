@@ -61,7 +61,7 @@ Test-suite crypto-pubkey-openssh-tests
 
                   , tasty                      == 0.8.*
                   , tasty-quickcheck           == 0.8.*
-                  , QuickCheck                 >= 2.6.*
+                  , QuickCheck                 >= 2.6
                   , temporary                  == 1.2.*  || == 1.1.*
                   , process                    == 1.2.*
                   , filepath                   == 1.3.*
