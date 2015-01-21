@@ -17,6 +17,9 @@ Build-type:         Simple
 Cabal-version:      >= 1.12
 Tested-with:        GHC == 7.6.*
 
+Extra-source-files:
+  README.md
+
 Flag OpenSsh
   Description:      Test with ssh-keygen
   Default:          False
