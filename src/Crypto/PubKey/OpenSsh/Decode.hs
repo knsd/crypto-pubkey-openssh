@@ -82,7 +82,7 @@ decodePrivate bs = pemParseBS bs >>= \pems -> case pems of
         case pemName of
             "RSA PRIVATE KEY" -> parseRSA p
             "DSA PRIVATE KEY" -> parseDSA p
-            _                 -> Left "Unknown private key type"
+            _                 -> Left ("Unknown private key type: " ++ pemName)
   where
     parseDSA  :: PEM -> Either String OpenSshPrivateKey
     parseDSA (PEM {..}) =
