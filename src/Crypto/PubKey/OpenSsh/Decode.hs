@@ -4,7 +4,7 @@ module Crypto.PubKey.OpenSsh.Decode where
 
 import Prelude hiding (take)
 
-import Control.Applicative ((<|>))
+import Control.Applicative ((*>), (<|>))
 import Control.Monad (void, replicateM)
 import Data.ByteString.Char8 (ByteString)
 import Data.Char (isControl)
