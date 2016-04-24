@@ -4,7 +4,7 @@ module Crypto.PubKey.OpenSsh.Decode where
 
 import Prelude hiding (take)
 
-import Control.Applicative ((*>), (<|>))
+import Control.Applicative ((<|>))
 import Control.Monad (void, replicateM)
 import Data.ByteString.Char8 (ByteString)
 import Data.Char (isControl)
@@ -17,8 +17,8 @@ import Data.ASN1.Types (ASN1(IntVal, Start, End), ASN1ConstructionType(Sequence)
 import Data.ASN1.BinaryEncoding (DER(..))
 import Data.Serialize (Get, getBytes, runGet, getWord32be, getWord8)
 import qualified Data.ByteString.Base64 as Base64
-import qualified Crypto.Types.PubKey.DSA as DSA
-import qualified Crypto.Types.PubKey.RSA as RSA
+import qualified Crypto.PubKey.DSA as DSA
+import qualified Crypto.PubKey.RSA as RSA
 
 import Crypto.PubKey.OpenSsh.Types (OpenSshKeyType(..), OpenSshPublicKey(..),
                                     OpenSshPrivateKey(..))

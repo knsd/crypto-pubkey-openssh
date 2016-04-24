@@ -14,8 +14,8 @@ import Data.ASN1.Encoding (encodeASN1')
 import Data.ASN1.Types (ASN1(IntVal, Start, End), ASN1ConstructionType(Sequence))
 import Data.ASN1.BinaryEncoding (DER(..))
 import Data.PEM (PEM(..), pemWriteBS)
-import qualified Crypto.Types.PubKey.DSA as DSA
-import qualified Crypto.Types.PubKey.RSA as RSA
+import qualified Crypto.PubKey.DSA as DSA
+import qualified Crypto.PubKey.RSA as RSA
 import qualified Data.ByteString.Base64 as Base64
 
 import Crypto.PubKey.OpenSsh.Types (OpenSshKeyType(..), OpenSshPublicKey(..),
