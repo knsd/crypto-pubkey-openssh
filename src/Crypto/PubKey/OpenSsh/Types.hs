@@ -4,8 +4,8 @@ module Crypto.PubKey.OpenSsh.Types where
 
 import Data.ByteString (ByteString)
 
-import qualified Crypto.Types.PubKey.DSA as DSA
-import qualified Crypto.Types.PubKey.RSA as RSA
+import qualified Crypto.PubKey.DSA as DSA
+import qualified Crypto.PubKey.RSA as RSA
 
 data OpenSshPrivateKey = OpenSshPrivateKeyRsa !RSA.PrivateKey
                        | OpenSshPrivateKeyDsa !DSA.PrivateKey !DSA.PublicNumber
