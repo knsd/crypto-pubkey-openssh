@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings, RecordWildCards #-}
+{-# LANGUAGE CPP, OverloadedStrings, RecordWildCards #-}
 
 module Crypto.PubKey.OpenSsh.Decode where
 
@@ -23,7 +23,11 @@ import qualified Crypto.Types.PubKey.RSA as RSA
 import Crypto.PubKey.OpenSsh.Types (OpenSshKeyType(..), OpenSshPublicKey(..),
                                     OpenSshPrivateKey(..))
 
+#if !MIN_VERSION_base(4,13,0)
 readType :: Monad m => ByteString -> m OpenSshKeyType
+#else
+readType :: MonadFail m => ByteString -> m OpenSshKeyType
+#endif
 readType "ssh-rsa" = return OpenSshKeyTypeRsa
 readType "ssh-dss" = return OpenSshKeyTypeDsa
 readType _ = fail "Invalid key type"
